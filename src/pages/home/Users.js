@@ -56,10 +56,7 @@ export default function Users() {
           }
         >
           <Image
-            src={
-              user.imageUrl ||
-              "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
-            }
+            src={user.imageUrl || "https://i.stack.imgur.com/l60Hf.png"}
             className="user-image"
           />
           <div className="d-none d-md-block ml-2">

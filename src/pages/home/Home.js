@@ -1,13 +1,13 @@
-import React, { Fragment, useEffect } from 'react'
-import { Row, Button } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
-import { gql, useSubscription } from '@apollo/client'
+import React, { Fragment, useEffect } from "react";
+import { Row, Button } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import { gql, useSubscription } from "@apollo/client";
 
-import { useAuthDispatch, useAuthState } from '../../context/auth'
-import { useMessageDispatch } from '../../context/message'
+import { useAuthDispatch, useAuthState } from "../../context/auth";
+import { useMessageDispatch } from "../../context/message";
 
-import Users from './Users'
-import Messages from './Messages'
+import Users from "./Users";
+import Messages from "./Messages";
 
 const NEW_MESSAGE = gql`
   subscription newMessage {
@@ -19,39 +19,39 @@ const NEW_MESSAGE = gql`
       createdAt
     }
   }
-`
+`;
 
 export default function Home({ history }) {
-  const authDispatch = useAuthDispatch()
-  const messageDispatch = useMessageDispatch()
+  const authDispatch = useAuthDispatch();
+  const messageDispatch = useMessageDispatch();
 
-  const { user } = useAuthState()
+  const { user } = useAuthState();
 
-  const { data: messageData, error: messageError } = useSubscription(
-    NEW_MESSAGE
-  )
+  const { data: messageData, error: messageError } =
+    useSubscription(NEW_MESSAGE);
 
   useEffect(() => {
-    if (messageError) console.log(messageError)
+    if (messageError) console.log(messageError);
 
     if (messageData) {
-      const message = messageData.newMessage
-      const otherUser = user.username === message.to ? message.from : message.to
+      const message = messageData.newMessage;
+      const otherUser =
+        user.username === message.to ? message.from : message.to;
 
       messageDispatch({
-        type: 'ADD_MESSAGE',
+        type: "ADD_MESSAGE",
         payload: {
           username: otherUser,
           message,
         },
-      })
+      });
     }
-  }, [messageError, messageData])
+  }, [messageError, messageData]);
 
   const logout = () => {
-    authDispatch({ type: 'LOGOUT' })
-    window.location.href = '/login'
-  }
+    authDispatch({ type: "LOGOUT" });
+    window.location.href = "/login";
+  };
 
   return (
     <Fragment>
@@ -71,5 +71,5 @@ export default function Home({ history }) {
         <Messages />
       </Row>
     </Fragment>
-  )
+  );
 }

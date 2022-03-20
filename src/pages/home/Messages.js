@@ -6,6 +6,7 @@ import { useMessageDispatch, useMessageState } from "../../context/message";
 
 import Message from "./Message";
 
+// graphql query for sending message
 const SEND_MESSAGE = gql`
   mutation sendMessage($to: String!, $content: String!) {
     sendMessage(to: $to, content: $content) {
@@ -18,6 +19,7 @@ const SEND_MESSAGE = gql`
   }
 `;
 
+// graphql query for receving message
 const GET_MESSAGES = gql`
   query getMessages($from: String!) {
     getMessages(from: $from) {
@@ -67,13 +69,14 @@ export default function Messages() {
     e.preventDefault();
 
     if (content.trim() === "" || !selectedUser) return;
-
+    //removing the value after sending
     setContent("");
 
     // mutation for sending the message
     sendMessage({ variables: { to: selectedUser.username, content } });
   };
 
+  // Displaying helper text and styling
   let selectedChatMarkup;
   if (!messages && !messagesLoading) {
     selectedChatMarkup = <p className="info-text">Select a friend</p>;
