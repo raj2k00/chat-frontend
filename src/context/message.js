@@ -57,6 +57,7 @@ const messageReducer = (state, action) => {
         ...state,
         users: usersCopy,
       };
+
     default:
       throw new Error(`Unknown action type: ${action.type}`);
   }

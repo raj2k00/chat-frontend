@@ -4,14 +4,19 @@ import {
   InMemoryCache,
   ApolloProvider as Provider,
   createHttpLink,
+  ApolloLink,
   split,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
+import { RetryLink } from "@apollo/client/link/retry";
+import { persistCache, LocalStorageWrapper } from "apollo3-cache-persist";
 import { WebSocketLink } from "@apollo/client/link/ws";
 import { getMainDefinition } from "@apollo/client/utilities";
+import QueueLink from "apollo-link-queue";
 
 let httpLink = createHttpLink({
-  uri: "http://localhost:4000",
+  // uri: "https://chat-app2k00.herokuapp.com/",
+  uri: "http://localhost:4000/",
 });
 
 const authLink = setContext((_, { headers }) => {
@@ -28,9 +33,8 @@ const authLink = setContext((_, { headers }) => {
 
 httpLink = authLink.concat(httpLink);
 
-// const host = window.location.host;
-
 const wsLink = new WebSocketLink({
+  // uri: `wss://chat-app2k00.herokuapp.com/`,
   uri: `ws://localhost:4000/`,
   options: {
     reconnect: true,
@@ -39,7 +43,8 @@ const wsLink = new WebSocketLink({
     },
   },
 });
-
+const link = new RetryLink();
+const queueLink = new QueueLink();
 const splitLink = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
@@ -52,9 +57,27 @@ const splitLink = split(
   httpLink
 );
 
+const cache = new InMemoryCache();
+
+const fun = async () =>
+  await persistCache({
+    cache,
+    storage: new LocalStorageWrapper(window.localStorage),
+  });
+fun();
+
 const client = new ApolloClient({
-  link: splitLink,
-  cache: new InMemoryCache(),
+  // link: splitLink,
+  link: ApolloLink.from([splitLink, queueLink, link]),
+  cache,
+  name: "chat-app",
+  version: "1.0.0",
+  queryDeduplication: false,
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: "cache-and-network",
+    },
+  },
 });
 
 export default function ApolloProvider(props) {

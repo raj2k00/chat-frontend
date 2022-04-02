@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from "react";
+import React, { Fragment, useEffect, lazy, Suspense } from "react";
 import { Row, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { gql, useSubscription } from "@apollo/client";
@@ -6,8 +6,8 @@ import { gql, useSubscription } from "@apollo/client";
 import { useAuthDispatch, useAuthState } from "../../context/auth";
 import { useMessageDispatch } from "../../context/message";
 
-import Users from "./Users";
-import Messages from "./Messages";
+const Messages = lazy(() => import("./Messages"));
+const Users = lazy(() => import("./Users"));
 
 const NEW_MESSAGE = gql`
   subscription newMessage {
@@ -17,6 +17,7 @@ const NEW_MESSAGE = gql`
       to
       content
       createdAt
+      hasSeen
     }
   }
 `;
@@ -67,8 +68,12 @@ export default function Home({ history }) {
         </Button>
       </Row>
       <Row className="bg-white">
-        <Users />
-        <Messages />
+        <Suspense fallback={<p className="info-text">Loading…</p>}>
+          <Users />
+        </Suspense>
+        <Suspense fallback={<p className="info-text">Loading…</p>}>
+          <Messages />
+        </Suspense>
       </Row>
     </Fragment>
   );

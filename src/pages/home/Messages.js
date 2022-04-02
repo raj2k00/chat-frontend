@@ -1,20 +1,21 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { gql, useLazyQuery, useMutation } from "@apollo/client";
+import { gql, useLazyQuery, useMutation, InMemoryCache } from "@apollo/client";
 import { Col, Form } from "react-bootstrap";
-
 import { useMessageDispatch, useMessageState } from "../../context/message";
-
+import uuid from "react-uuid";
 import Message from "./Message";
 
 // graphql query for sending message
 const SEND_MESSAGE = gql`
-  mutation sendMessage($to: String!, $content: String!) {
-    sendMessage(to: $to, content: $content) {
+  mutation sendMessage($uuid: String, $to: String!, $content: String!) {
+    sendMessage(uuid: $uuid, to: $to, content: $content) {
       uuid
       from
       to
       content
       createdAt
+      hasSeen
+      hasSent
     }
   }
 `;
@@ -28,6 +29,7 @@ const GET_MESSAGES = gql`
       to
       content
       createdAt
+      hasSeen
     }
   }
 `;
@@ -41,9 +43,37 @@ export default function Messages() {
   const messages = selectedUser?.messages;
 
   const [getMessages, { loading: messagesLoading, data: messagesData }] =
-    useLazyQuery(GET_MESSAGES);
+    useLazyQuery(GET_MESSAGES, {
+      update(cache) {
+        cache.readFragment({});
+        console.log("reading");
+      },
+    });
 
   const [sendMessage] = useMutation(SEND_MESSAGE, {
+    update(cache, { data: { sendMessage } }) {
+      cache.modify({
+        fields: {
+          getMessages(existingMsg) {
+            console.log(existingMsg);
+            const newMsgRef = cache.writeFragment({
+              data: sendMessage,
+              fragment: gql`
+                fragment sendNewMessage on Mutation {
+                  uuid
+                  to
+                  from
+                  content
+                  hasSeen
+                  hasSent
+                }
+              `,
+            });
+            return existingMsg.push(newMsgRef);
+          },
+        },
+      });
+    },
     onError: (err) => console.log(err),
   });
 
@@ -67,21 +97,36 @@ export default function Messages() {
 
   const submitMessage = (e) => {
     e.preventDefault();
-
     if (content.trim() === "" || !selectedUser) return;
     //removing the value after sending
-    setContent("");
+    let id = uuid();
+    // console.log(id);
 
-    // mutation for sending the message
-    sendMessage({ variables: { to: selectedUser.username, content } });
+    sendMessage({
+      variables: { uuid: id, to: selectedUser.username, content },
+      optimisticResponse: {
+        sendMessage: {
+          __typename: "Mutation",
+          uuid: id,
+          from: "User",
+          to: selectedUser.username,
+          content,
+          hasSent: false,
+          hasSeen: false,
+          createdAt: Date.now(),
+        },
+      },
+    });
+
+    setContent("");
   };
 
   // Displaying helper text and styling
   let selectedChatMarkup;
   if (!messages && !messagesLoading) {
-    selectedChatMarkup = <p className="info-text">Select a friend</p>;
+    selectedChatMarkup = <p className="info-text"> Select a friend</p>;
   } else if (messagesLoading) {
-    selectedChatMarkup = <p className="info-text">Loading..</p>;
+    selectedChatMarkup = <p className="info-text"> Loading..</p>;
   } else if (messages.length > 0) {
     selectedChatMarkup = messages.map((message, index) => (
       <Fragment key={message.uuid}>
