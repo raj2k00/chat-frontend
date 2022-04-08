@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import classNames from "classnames";
-import moment from "moment";
-import { OverlayTrigger, Tooltip } from "react-bootstrap";
+// import moment from "moment";
+// import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
 import { useAuthState } from "../../context/auth";
 import { gql, useMutation, useSubscription } from "@apollo/client";
@@ -54,8 +54,7 @@ export default function Message({ message }) {
   const statusView = (
     <p>
       <i
-        className={`fas icon-edit ${
-          msgStatus ? `fa-check-double` : `fa-check`}
+        className={`fas icon-edit ${msgStatus ? `fa-check-double` : `fa-check`}
          `}
       ></i>
     </p>
@@ -74,15 +73,7 @@ export default function Message({ message }) {
   }, []);
 
   return (
-    <OverlayTrigger
-      placement="top"
-      overlay={
-        <Tooltip>
-          {moment(message.createdAt).format("MMMM DD, YYYY @ h:mm a")}
-        </Tooltip>
-      }
-      transition={true}
-    >
+    <div className="d-flex">
       <div
         className={classNames("d-flex my-3 align-items-end", {
           "ml-auto": sent,
@@ -101,6 +92,6 @@ export default function Message({ message }) {
         </div>
         {sent && statusView}
       </div>
-    </OverlayTrigger>
+    </div>
   );
 }

@@ -15,8 +15,8 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import QueueLink from "apollo-link-queue";
 
 let httpLink = createHttpLink({
-  // uri: "https://chat-app2k00.herokuapp.com/",
-  uri: "http://localhost:4000/",
+  uri: "https://chat-app2k00.herokuapp.com/",
+  // uri: "http://localhost:4000/",
 });
 
 const authLink = setContext((_, { headers }) => {
@@ -34,8 +34,8 @@ const authLink = setContext((_, { headers }) => {
 httpLink = authLink.concat(httpLink);
 
 const wsLink = new WebSocketLink({
-  // uri: `wss://chat-app2k00.herokuapp.com/`,
-  uri: `ws://localhost:4000/`,
+  uri: `wss://chat-app2k00.herokuapp.com/`,
+  // uri: `ws://localhost:4000/`,
   options: {
     reconnect: true,
     connectionParams: {
@@ -67,7 +67,6 @@ const fun = async () =>
 fun();
 
 const client = new ApolloClient({
-  // link: splitLink,
   link: ApolloLink.from([splitLink, queueLink, link]),
   cache,
   name: "chat-app",

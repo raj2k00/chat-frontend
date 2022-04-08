@@ -1,9 +1,9 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { gql, useLazyQuery, useMutation, InMemoryCache } from "@apollo/client";
+import { gql, useLazyQuery, useMutation } from "@apollo/client";
 import { Col, Form } from "react-bootstrap";
 import { useMessageDispatch, useMessageState } from "../../context/message";
-import uuid from "react-uuid";
 import Message from "./Message";
+import { v4 as uuidv4 } from "uuid";
 
 // graphql query for sending message
 const SEND_MESSAGE = gql`
@@ -57,9 +57,8 @@ export default function Messages() {
           getMessages(existingMsg) {
             console.log(existingMsg);
             const newMsgRef = cache.writeFragment({
-              data: sendMessage,
               fragment: gql`
-                fragment sendNewMessage on Mutation {
+                fragment sendMessage on Mutation {
                   uuid
                   to
                   from
@@ -68,8 +67,9 @@ export default function Messages() {
                   hasSent
                 }
               `,
+              data: sendMessage,
             });
-            return existingMsg.push(newMsgRef);
+            return existingMsg.concat(newMsgRef);
           },
         },
       });
@@ -98,15 +98,15 @@ export default function Messages() {
   const submitMessage = (e) => {
     e.preventDefault();
     if (content.trim() === "" || !selectedUser) return;
-    //removing the value after sending
-    let id = uuid();
+    let id = uuidv4();
     // console.log(id);
 
     sendMessage({
       variables: { uuid: id, to: selectedUser.username, content },
       optimisticResponse: {
+        __typename: "Mutation",
         sendMessage: {
-          __typename: "Mutation",
+          __typename: "Message",
           uuid: id,
           from: "User",
           to: selectedUser.username,
